@@ -252,38 +252,35 @@
         </div>
     </div>
 
-   <script>
+  <script>
     let numFolio = localStorage.getItem('folio_antonio') || 1;
     const spanFolio = document.getElementById('folio-val');
     spanFolio.innerText = String(numFolio).padStart(5, '0');
 
     function generarImagen() {
         const elemento = document.getElementById('captura');
-        
-        // Ocultar botón antes de tomar la foto
         const boton = document.querySelector('.btn-whatsapp');
-        if(boton) boton.style.display = 'none';
+        
+        // Ocultar botón antes de capturar
+        boton.style.display = 'none';
 
         html2canvas(elemento, {
             scale: 3, 
             useCORS: true,       
             backgroundColor: "#ffffff",
+            windowWidth: 1400,
             onclone: (documentoClonado) => {
+                // Aquí mantienes toda tu lógica de conversión de inputs a spans
                 const inputs = documentoClonado.querySelectorAll('input, textarea');
                 inputs.forEach(input => {
                     if (input.type === 'text' || input.tagName === 'TEXTAREA' || input.type === 'number') {
                         const span = documentoClonado.createElement('span');
                         span.innerText = input.value;
-                        
                         span.style.cssText = window.getComputedStyle(input).cssText;
                         span.style.display = 'inline-block';
                         
-                        // --- ARREGLO 1: SEPARACIÓN DE DATOS DEL CLIENTE ---
-                        if (input.classList.contains('input-invisible')) {
-                            span.style.paddingLeft = '35px'; 
-                        }
-
-                        // --- ARREGLO 2: EL TOTAL GIGANTE ---
+                        // Aplicamos tus reglas de diseño (Folio, Warranty, Totales, etc.)
+                        if (input.classList.contains('input-invisible')) span.style.paddingLeft = '35px'; 
                         if (input.classList.contains('input-final-total')) {
                             span.style.fontSize = '30px'; 
                             span.style.fontWeight = '900';
@@ -293,59 +290,30 @@
                             span.style.lineHeight = '0.8'; 
                             span.style.marginTop = '10px';
                         }
-
-                        // --- ARREGLO 3: PARA EL CUADRITO DE WARRANTY ---
                         if (input.classList.contains('input-warranty-field')) {
                             span.style.paddingLeft = '10px';
                             span.style.fontWeight = 'bold';
                             span.style.fontSize = '14px';
-                            span.style.display = 'flex';
-                            span.style.alignItems = 'center';
-                            span.style.height = '100%';
                         }
-
-                        // --- ARREGLO 4: SEPARACIÓN DE LA "X" Y EL "$" ---
-                        if (input.classList.contains('in-ac')) {
-                            span.style.padding = '0';
-                            span.style.margin = '0';
-                            
-                            let textoAnterior = "";
-                            if (input.previousSibling && input.previousSibling.nodeType === Node.TEXT_NODE) {
-                                textoAnterior = input.previousSibling.textContent.trim();
-                            }
-
-                            if (textoAnterior === 'X') {
-                                span.style.width = '100%';
-                                span.style.display = 'block';
-                                span.style.textAlign = 'center';
-                                span.style.paddingTop = '1px';
-                            } else if (textoAnterior.includes('$')) {
-                                span.style.textAlign = 'left';
-                                span.style.paddingLeft = '15px';
-                                span.style.display = 'block';
-                            } else {
-                                span.style.paddingLeft = '5px';
-                            }
-                        }
-                        
+                        // Reemplazamos el input por el span convertido
                         input.parentNode.replaceChild(span, input);
                     }
                 });
             }
         }).then(canvas => {
-            // Mostrar botón de nuevo después de la foto
-            if(boton) boton.style.display = 'block';
+            // Mostrar botón de nuevo
+            boton.style.display = 'block';
 
+            // Guardar imagen automáticamente
             const link = document.createElement('a');
             const actualFolio = String(numFolio).padStart(5, '0');
             link.download = `Antonio_Rooter_Folio_${actualFolio}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
 
+            // Incrementar folio y recargar para limpiar campos
             numFolio++;
             localStorage.setItem('folio_antonio', numFolio);
-            spanFolio.innerText = String(numFolio).padStart(5, '0');
-            
             setTimeout(() => { location.reload(); }, 500);
         });
     }
