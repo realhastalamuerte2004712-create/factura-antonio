@@ -56,7 +56,7 @@ body {
     align-items: center; 
     position: relative; 
 }
-.gota-logo { position: absolute; left: 10px; top: 0px; width: 85px; height: 110px; }
+.gota-logo { position: absolute; left: 10px; top: 0px; width: 85px; height: 140px; }
 .texto-header { margin-left: 60px; flex-grow: 0; margin-right: 40px; }
 .texto-header h1 { font-size: 45px; font-style: italic; font-weight: 900; line-height: 0.8; }
 .texto-header h2 { font-size: 19px; letter-spacing: 5px; margin-bottom: 5px; }
@@ -117,10 +117,22 @@ body {
 
 
 /* ORDEN */
-.contenedor-orden { position: absolute; right: -230px; top: -110px; width: 220px; text-align: left; }
-.gota-derecha { width: 95px; height: 124px; margin-bottom: 5px; margin-left: 40px; margin-top: -50px;}
-.info-orden { font-weight: bold; font-size: 14px; }
-.checks { display: flex; flex-direction: column; gap: 5px; }
+.contenedor-orden { 
+    position: absolute; 
+    right: -230px; 
+    top: -110px; 
+    width: 220px; 
+    text-align: left; 
+}
+
+.gota-derecha { 
+    width: 95px;      /* Puedes ajustar el tamaño aquí */
+    height: 160px;    /* Ajusta este valor si la imagen se ve estirada */
+    margin-bottom: 5px; 
+    margin-left: 40px; 
+    margin-top: -50px;
+    display: block;   /* Asegura que se comporte como bloque */
+}
 
 /* SERVICIOS */
 .tabla-servicios { display: flex; border: 1.5px solid #005596; margin-top: 8px; width: 80%; }
@@ -135,7 +147,7 @@ body {
 .tit-warranty { background: #005596; color: white; font-size: 11px; font-weight: bold; padding: 3px 15px; width: fit-content; }
 .tabla-solo-servicios { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .tabla-solo-servicios th { background: #005596; color: white; font-size: 10px; padding: 5px; border: 1px solid white; }
-.tabla-solo-servicios td { height: 26px; border: 1px solid #005596; }
+.tabla-solo-servicios td { min-height: 26px; border: 1px solid #005596; vertical-align: top; }
 .bg-blue-light { background-color: #d1e3f1 !important; }
 
 /* NUEVOS ESTILOS PARA EL WARRANTY SEPARADO (AGREGADO) */
@@ -197,7 +209,7 @@ body {
 .frase-roja { color: #e60000; font-size: 15px; font-weight: 900; text-align: center; margin: 8px 0; width: 80%; }
 
 /* INPUTS */
-#captura input, #captura textarea { border: none !important; outline: none !important; background: transparent; padding: 0 5px; font-family: inherit; font-size: 14px; }
+#captura input, #captura textarea { border: none !important; outline: none !important; background: transparent; padding: 0 5px; font-family: inherit; font-size: 14px; text-transform: uppercase; font-weight: bold; word-break: break-word; overflow-wrap: break-word; }
 .input-totales { text-align: center; font-weight: bold; width: 100%; height: 100%; }
 
 /* EL AJUSTE DEFINITIVO PARA EL TOTAL */
@@ -223,10 +235,11 @@ body {
 }
 
 .input-tabla { width: 100%; height: 100%; }
-.input-recomendaciones { width: 100%; height: 90px; resize: none; line-height: 22px; margin-top: 5px; }
+.input-desc { width: 100%; min-height: 24px; resize: none; overflow: hidden; white-space: pre-wrap; line-height: 1.3; display: block; }
+.input-recomendaciones { width: 100%; height: 90px; resize: none; line-height: 22px; margin-top: 5px; overflow-y: auto; white-space: pre-wrap; }
 
 /* SERVICE AGREEMENT */
-.cuadro-acuerdo-flotante { position: absolute; right: -280px; top: 0; width: 275px; height: 515px; border: 1.5px solid #005596; background: white; display: flex; flex-direction: column; }
+.cuadro-acuerdo-flotante { position: absolute; right: -280px; top: 0; width: 275px; height: 509px; border: 1.5px solid #005596; background: white; display: flex; flex-direction: column; }
 .tit-blue-acuerdo { background: #005596; color: white; font-size: 10px; font-weight: bold; text-align: center; padding: 5px; }
 .cuerpo-acuerdo { padding: 5px 20px; font-size: 11px; line-height: 1.2; color: #000; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
 .txt-rojo { color: #e60000; font-weight: bold; margin: 3px 5; }
