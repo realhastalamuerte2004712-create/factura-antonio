@@ -16,7 +16,17 @@
         <div class="n-folio">NO. <span id="folio-val">00001</span></div>
 
         <div class="header-azul">
-            <img src="factura-antonio\imagenes\IMG-20260630-WA0024.jpg" class="gota-logo">
+            <svg class="gota-logo" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="gotaGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#bfe3ff"/>
+                        <stop offset="55%" stop-color="#4fa8e8"/>
+                        <stop offset="100%" stop-color="#0a6fc2"/>
+                    </linearGradient>
+                </defs>
+                <path d="M50 5 C 50 5, 12 55, 12 85 C 12 109, 29 125, 50 125 C 71 125, 88 109, 88 85 C 88 55, 50 5, 50 5 Z" fill="url(#gotaGrad1)"/>
+                <ellipse cx="38" cy="70" rx="9" ry="14" fill="#ffffff" opacity="0.55"/>
+            </svg>
             <div class="texto-header">
                 <h1>ANTONIO ROOTER</h1>
                 <h2>PLUMBING SERVICE</h2>
@@ -80,7 +90,17 @@
             </table>
 
             <div class="contenedor-orden">
-                <img src="factura-antonio\imagenes\IMG-20260630-WA0024.jpg" class="gota-derecha">
+                <svg class="gota-derecha" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gotaGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#bfe3ff"/>
+                            <stop offset="55%" stop-color="#4fa8e8"/>
+                            <stop offset="100%" stop-color="#0a6fc2"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M50 5 C 50 5, 12 55, 12 85 C 12 109, 29 125, 50 125 C 71 125, 88 109, 88 85 C 88 55, 50 5, 50 5 Z" fill="url(#gotaGrad2)"/>
+                    <ellipse cx="38" cy="70" rx="9" ry="14" fill="#ffffff" opacity="0.55"/>
+                </svg>
                 <div class="info-orden">
                     <div class="checks">
                         <div><input type="checkbox" class="c-check"> <span>ZELLE (310) 461-9014</span></div>
@@ -252,103 +272,148 @@
         </div>
     </div>
 
-   <script>
-    let numFolio = localStorage.getItem('folio_antonio') || 1;
-    const spanFolio = document.getElementById('folio-val');
-    spanFolio.innerText = String(numFolio).padStart(5, '0');
+    <div id="preview-overlay" class="preview-overlay">
+        <div class="preview-box">
+            <img id="preview-img" alt="Factura generada">
+            <div class="preview-botones">
+                <button id="btn-guardar" class="btn-preview btn-guardar">💾 Guardar en Fotos</button>
+                <button id="btn-compartir" class="btn-preview btn-compartir">📲 Compartir por WhatsApp</button>
+                <button id="btn-cerrar" class="btn-preview btn-cerrar">Cerrar</button>
+            </div>
+        </div>
+    </div>
 
-    function generarImagen() {
-        const elemento = document.getElementById('captura');
-        
-        // Ocultar botón antes de tomar la foto
-        const boton = document.querySelector('.btn-whatsapp');
-        if(boton) boton.style.display = 'none';
+  <script>
+   let numFolio = Number(localStorage.getItem("folio_antonio")) || 1;
 
-        html2canvas(elemento, {
-            scale: 3, 
-            useCORS: true,       
+const spanFolio = document.getElementById("folio-val");
+const boton = document.querySelector(".btn-whatsapp");
+const overlay = document.getElementById("preview-overlay");
+const previewImg = document.getElementById("preview-img");
+const btnGuardar = document.getElementById("btn-guardar");
+const btnCompartir = document.getElementById("btn-compartir");
+const btnCerrar = document.getElementById("btn-cerrar");
+
+let archivoActual = null; // File listo para compartir
+let urlActual = null;     // blob URL para mostrar/guardar
+
+spanFolio.textContent = String(numFolio).padStart(5, "0");
+
+boton.addEventListener("click", generarImagen);
+
+async function generarImagen() {
+
+    boton.disabled = true;
+    boton.innerHTML = "Generando...";
+
+    const elemento = document.getElementById("captura");
+
+    try {
+
+        const canvas = await html2canvas(elemento, {
+            scale: window.devicePixelRatio > 2 ? 2 : 3,
+            useCORS: true,
+            allowTaint: false,
             backgroundColor: "#ffffff",
-            onclone: (documentoClonado) => {
-                const inputs = documentoClonado.querySelectorAll('input, textarea');
-                inputs.forEach(input => {
-                    if (input.type === 'text' || input.tagName === 'TEXTAREA' || input.type === 'number') {
-                        const span = documentoClonado.createElement('span');
-                        span.innerText = input.value;
-                        
-                        span.style.cssText = window.getComputedStyle(input).cssText;
-                        span.style.display = 'inline-block';
-                        
-                        // --- ARREGLO 1: SEPARACIÓN DE DATOS DEL CLIENTE ---
-                        if (input.classList.contains('input-invisible')) {
-                            span.style.paddingLeft = '35px'; 
+            logging: false,
+            imageTimeout: 15000,
+            scrollX: 0,
+            scrollY: -window.scrollY,
+            windowWidth: document.documentElement.scrollWidth,
+            windowHeight: document.documentElement.scrollHeight,
+            onclone: (doc) => {
+                doc.querySelectorAll("input, textarea").forEach(input => {
+                    if (input.type === "checkbox") {
+                        if (input.checked) {
+                            input.style.accentColor = "#005596";
                         }
-
-                        // --- ARREGLO 2: EL TOTAL GIGANTE ---
-                        if (input.classList.contains('input-final-total')) {
-                            span.style.fontSize = '30px'; 
-                            span.style.fontWeight = '900';
-                            span.style.display = 'block';
-                            span.style.textAlign = 'center';
-                            span.style.width = '100%';
-                            span.style.lineHeight = '0.8'; 
-                            span.style.marginTop = '10px';
-                        }
-
-                        // --- ARREGLO 3: PARA EL CUADRITO DE WARRANTY ---
-                        if (input.classList.contains('input-warranty-field')) {
-                            span.style.paddingLeft = '10px';
-                            span.style.fontWeight = 'bold';
-                            span.style.fontSize = '14px';
-                            span.style.display = 'flex';
-                            span.style.alignItems = 'center';
-                            span.style.height = '100%';
-                        }
-
-                        // --- ARREGLO 4: SEPARACIÓN DE LA "X" Y EL "$" ---
-                        if (input.classList.contains('in-ac')) {
-                            span.style.padding = '0';
-                            span.style.margin = '0';
-                            
-                            let textoAnterior = "";
-                            if (input.previousSibling && input.previousSibling.nodeType === Node.TEXT_NODE) {
-                                textoAnterior = input.previousSibling.textContent.trim();
-                            }
-
-                            if (textoAnterior === 'X') {
-                                span.style.width = '100%';
-                                span.style.display = 'block';
-                                span.style.textAlign = 'center';
-                                span.style.paddingTop = '1px';
-                            } else if (textoAnterior.includes('$')) {
-                                span.style.textAlign = 'left';
-                                span.style.paddingLeft = '15px';
-                                span.style.display = 'block';
-                            } else {
-                                span.style.paddingLeft = '5px';
-                            }
-                        }
-                        
-                        input.parentNode.replaceChild(span, input);
+                        return;
                     }
+                    if (input.type === "radio") {
+                        return;
+                    }
+                    const span = doc.createElement("span");
+                    span.textContent = input.value;
+                    span.style.cssText = getComputedStyle(input).cssText;
+                    span.style.whiteSpace = "pre-wrap";
+                    span.style.display = "inline-block";
+                    if (input.classList.contains("input-final-total")) {
+                        span.style.fontSize = "30px";
+                        span.style.fontWeight = "900";
+                        span.style.width = "100%";
+                        span.style.textAlign = "center";
+                    }
+                    input.parentNode.replaceChild(span, input);
                 });
             }
-        }).then(canvas => {
-            // Mostrar botón de nuevo después de la foto
-            if(boton) boton.style.display = 'block';
-
-            const link = document.createElement('a');
-            const actualFolio = String(numFolio).padStart(5, '0');
-            link.download = `Antonio_Rooter_Folio_${actualFolio}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-
-            numFolio++;
-            localStorage.setItem('folio_antonio', numFolio);
-            spanFolio.innerText = String(numFolio).padStart(5, '0');
-            
-            setTimeout(() => { location.reload(); }, 500);
         });
+
+        const nombre = `Antonio_Rooter_Folio_${String(numFolio).padStart(5, "0")}.png`;
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        if (!blob) throw new Error("No se pudo generar la imagen");
+
+        archivoActual = new File([blob], nombre, { type: "image/png" });
+
+        if (urlActual) URL.revokeObjectURL(urlActual);
+        urlActual = URL.createObjectURL(blob);
+        previewImg.src = urlActual;
+        overlay.classList.add("activo");
+
+        // El folio avanza solo cuando la imagen ya se generó correctamente.
+        numFolio++;
+        localStorage.setItem("folio_antonio", numFolio);
+
+    } catch (error) {
+
+        console.error(error);
+        alert("No fue posible generar la factura.");
+
+    } finally {
+
+        boton.disabled = false;
+        boton.innerHTML = "GENERAR PARA WHATSAPP";
+
     }
+
+}
+
+// IMPORTANTE: este click es un gesto de usuario NUEVO y directo (sin await antes),
+// por eso iOS Safari sí permite que navigator.share() funcione aquí.
+btnCompartir.addEventListener("click", () => {
+    if (!archivoActual) return;
+
+    if (navigator.canShare && navigator.canShare({ files: [archivoActual] })) {
+        navigator.share({ title: "Factura", files: [archivoActual] }).catch(() => {
+            // El usuario canceló el panel de compartir, no es un error real.
+        });
+    } else {
+        alert("Tu navegador no permite compartir archivos directamente. Usa 'Guardar en Fotos' y luego adjúntala en WhatsApp.");
+    }
+});
+
+// En iOS no existe forma de guardar directo en el rollo de Fotos vía JavaScript.
+// Por eso mostramos la imagen real y el usuario la guarda con un toque largo.
+btnGuardar.addEventListener("click", () => {
+    if (!urlActual) return;
+
+    const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if (esIOS) {
+        alert("Mantén presionada la imagen de arriba y elige 'Agregar a Fotos'.");
+    } else {
+        const enlace = document.createElement("a");
+        enlace.href = urlActual;
+        enlace.download = archivoActual.name;
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+    }
+});
+
+btnCerrar.addEventListener("click", () => {
+    overlay.classList.remove("activo");
+});
 </script>
 </body>
 </html>
