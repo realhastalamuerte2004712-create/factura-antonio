@@ -252,11 +252,30 @@
         </div>
     </div>
 
+    <div id="preview-overlay" class="preview-overlay">
+        <div class="preview-box">
+            <img id="preview-img" alt="Factura generada">
+            <div class="preview-botones">
+                <button id="btn-guardar" class="btn-preview btn-guardar">💾 Guardar en Fotos</button>
+                <button id="btn-compartir" class="btn-preview btn-compartir">📲 Compartir por WhatsApp</button>
+                <button id="btn-cerrar" class="btn-preview btn-cerrar">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
   <script>
    let numFolio = Number(localStorage.getItem("folio_antonio")) || 1;
 
 const spanFolio = document.getElementById("folio-val");
 const boton = document.querySelector(".btn-whatsapp");
+const overlay = document.getElementById("preview-overlay");
+const previewImg = document.getElementById("preview-img");
+const btnGuardar = document.getElementById("btn-guardar");
+const btnCompartir = document.getElementById("btn-compartir");
+const btnCerrar = document.getElementById("btn-cerrar");
+
+let archivoActual = null; // File listo para compartir
+let urlActual = null;     // blob URL para mostrar/guardar
 
 spanFolio.textContent = String(numFolio).padStart(5, "0");
 
@@ -272,156 +291,109 @@ async function generarImagen() {
     try {
 
         const canvas = await html2canvas(elemento, {
-
             scale: window.devicePixelRatio > 2 ? 2 : 3,
-
             useCORS: true,
-
             allowTaint: false,
-
             backgroundColor: "#ffffff",
-
             logging: false,
-
             imageTimeout: 15000,
-
             scrollX: 0,
-
             scrollY: -window.scrollY,
-
             windowWidth: document.documentElement.scrollWidth,
-
             windowHeight: document.documentElement.scrollHeight,
-
             onclone: (doc) => {
-
                 doc.querySelectorAll("input, textarea").forEach(input => {
-
                     if (input.type === "checkbox") {
-
                         if (input.checked) {
-
                             input.style.accentColor = "#005596";
-
                         }
-
                         return;
-
                     }
-
                     if (input.type === "radio") {
-
                         return;
-
                     }
-
                     const span = doc.createElement("span");
-
                     span.textContent = input.value;
-
                     span.style.cssText = getComputedStyle(input).cssText;
-
                     span.style.whiteSpace = "pre-wrap";
-
                     span.style.display = "inline-block";
-
                     if (input.classList.contains("input-final-total")) {
-
                         span.style.fontSize = "30px";
-
                         span.style.fontWeight = "900";
-
                         span.style.width = "100%";
-
                         span.style.textAlign = "center";
-
                     }
-
                     input.parentNode.replaceChild(span, input);
-
                 });
-
             }
-
         });
 
         const nombre = `Antonio_Rooter_Folio_${String(numFolio).padStart(5, "0")}.png`;
 
-        canvas.toBlob(async (blob) => {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        if (!blob) throw new Error("No se pudo generar la imagen");
 
-            if (!blob) return;
+        archivoActual = new File([blob], nombre, { type: "image/png" });
 
-            const archivo = new File([blob], nombre, {
-                type: "image/png"
-            });
+        if (urlActual) URL.revokeObjectURL(urlActual);
+        urlActual = URL.createObjectURL(blob);
+        previewImg.src = urlActual;
+        overlay.classList.add("activo");
 
-            // iPhone y Android
+        // El folio avanza solo cuando la imagen ya se generó correctamente.
+        numFolio++;
+        localStorage.setItem("folio_antonio", numFolio);
 
-            if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-
-                try {
-
-                    await navigator.share({
-
-                        title: "Factura",
-
-                        files: [archivo]
-
-                    });
-
-                } catch (e) {
-
-                    console.log("Compartir cancelado");
-
-                }
-
-            } else {
-
-                const url = URL.createObjectURL(blob);
-
-                const enlace = document.createElement("a");
-
-                enlace.href = url;
-
-                enlace.download = nombre;
-
-                document.body.appendChild(enlace);
-
-                enlace.click();
-
-                enlace.remove();
-
-                URL.revokeObjectURL(url);
-
-            }
-
-            numFolio++;
-
-            localStorage.setItem("folio_antonio", numFolio);
-
-            location.reload();
-
-        }, "image/png");
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(error);
-
         alert("No fue posible generar la factura.");
 
-    }
-
-    finally {
+    } finally {
 
         boton.disabled = false;
-
         boton.innerHTML = "GENERAR PARA WHATSAPP";
 
     }
 
 }
+
+// IMPORTANTE: este click es un gesto de usuario NUEVO y directo (sin await antes),
+// por eso iOS Safari sí permite que navigator.share() funcione aquí.
+btnCompartir.addEventListener("click", () => {
+    if (!archivoActual) return;
+
+    if (navigator.canShare && navigator.canShare({ files: [archivoActual] })) {
+        navigator.share({ title: "Factura", files: [archivoActual] }).catch(() => {
+            // El usuario canceló el panel de compartir, no es un error real.
+        });
+    } else {
+        alert("Tu navegador no permite compartir archivos directamente. Usa 'Guardar en Fotos' y luego adjúntala en WhatsApp.");
+    }
+});
+
+// En iOS no existe forma de guardar directo en el rollo de Fotos vía JavaScript.
+// Por eso mostramos la imagen real y el usuario la guarda con un toque largo.
+btnGuardar.addEventListener("click", () => {
+    if (!urlActual) return;
+
+    const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if (esIOS) {
+        alert("Mantén presionada la imagen de arriba y elige 'Agregar a Fotos'.");
+    } else {
+        const enlace = document.createElement("a");
+        enlace.href = urlActual;
+        enlace.download = archivoActual.name;
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+    }
+});
+
+btnCerrar.addEventListener("click", () => {
+    overlay.classList.remove("activo");
+});
 </script>
 </body>
 </html>

@@ -8,22 +8,6 @@ body {
     display: block; 
 }
 
-/* Modificamos la hoja para que sea responsiva */
-.hoja-factura { 
-    background: white; 
-    width: 1000px; /* Reducimos el ancho base para que sea más manejable */
-    height: auto;  /* Cambiamos de 1200px a 'auto' para que crezca según el contenido */
-    padding: 10px; 
-    position: relative; 
-    border: 1px solid #000;
-    margin: 0 auto; /* Esto centra la factura automáticamente */
-}
-
-/* IMPORTANTE: Ajuste para las secciones flotantes (acuerdo y orden) */
-/* Para que no se salgan de la pantalla en móviles */
-.contenedor-orden { position: static; width: 100%; margin-top: 20px; }
-.cuadro-acuerdo-flotante { position: static; width: 100%; margin-top: 20px; }
-
 /* BOTÓN VERDE WHATSAPP */
 .btn-whatsapp {
     background: #25D366;
@@ -47,6 +31,7 @@ body {
     padding: 10px; 
     position: relative; 
     border: 1px solid #000;
+    margin: 0 auto;
 }
 
 /* FOLIO ROJO */
@@ -282,3 +267,52 @@ textarea{
 canvas{
     max-width:100%;
 }
+
+/* MODAL DE VISTA PREVIA (para iOS) */
+.preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.preview-overlay.activo { display: flex; }
+.preview-box {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    max-width: 95vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: auto;
+}
+#preview-img {
+    max-width: 100%;
+    max-height: 55vh;
+    object-fit: contain;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    align-self: center;
+}
+.preview-botones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.btn-preview {
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+.btn-guardar { background: #005596; color: white; }
+.btn-compartir { background: #25D366; color: white; }
+.btn-cerrar { background: #eee; color: #333; }
