@@ -1,0 +1,261 @@
+/* AJUSTE GLOBAL PARA QUE TODO SE VEA BIEN */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Narrow', sans-serif; }
+
+/* En lugar de 'column', usamos 'block' para que la página permita scroll horizontal si es necesario */
+body { 
+    background: #333; 
+    padding: 20px; 
+    display: block; 
+}
+
+/* Modificamos la hoja para que sea responsiva */
+.hoja-factura { 
+    background: white; 
+    width: 1000px; /* Reducimos el ancho base para que sea más manejable */
+    height: auto;  /* Cambiamos de 1200px a 'auto' para que crezca según el contenido */
+    padding: 10px; 
+    position: relative; 
+    border: 1px solid #000;
+    margin: 0 auto; /* Esto centra la factura automáticamente */
+}
+
+/* IMPORTANTE: Ajuste para las secciones flotantes (acuerdo y orden) */
+/* Para que no se salgan de la pantalla en móviles */
+.contenedor-orden { position: static; width: 100%; margin-top: 20px; }
+.cuadro-acuerdo-flotante { position: static; width: 100%; margin-top: 20px; }
+
+/* BOTÓN VERDE WHATSAPP */
+.btn-whatsapp {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-weight: bold;
+    font-size: 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.btn-whatsapp:active { transform: translateY(2px); background: #128C7E; }
+
+.hoja-factura { 
+    background: white; 
+    width: 1400px; 
+    height: 1200px; 
+    padding: 10px; 
+    position: relative; 
+    border: 1px solid #000;
+}
+
+/* FOLIO ROJO */
+.n-folio {
+    position: absolute;
+    top: 20px;
+    right: 20px;          
+    color: #e60000;
+    font-size: 20px;
+    font-weight: 900;
+    z-index: 100;
+}
+
+/* ENCABEZADO */
+.header-azul { 
+    background: #005596; 
+    color: white; 
+    height: 85px; 
+    padding: 10px 40px; 
+    display: flex; 
+    justify-content: flex-start; 
+    align-items: center; 
+    position: relative; 
+}
+.gota-logo { position: absolute; left: 10px; top: 0px; width: 85px; }
+.texto-header { margin-left: 60px; flex-grow: 0; margin-right: 40px; }
+.texto-header h1 { font-size: 45px; font-style: italic; font-weight: 900; line-height: 0.8; }
+.texto-header h2 { font-size: 19px; letter-spacing: 5px; margin-bottom: 5px; }
+
+/* SECCIÓN DE CONTACTO */
+.contacto-sub-header { 
+    display: flex; 
+    justify-content: flex-start; 
+    align-items: center; 
+    padding: 10px 0 10px 100px; 
+    width: 80%;
+    gap: 30px; 
+}
+.telefono-principal, .telefono-inline { font-size: 32px; font-weight: 900; color: #000; letter-spacing: -1px; white-space: nowrap; }
+.direccion-texto { font-size: 15px; font-weight: bold; text-align: left; line-height: 0.85; color: #000; white-space: nowrap; }
+
+/* INSIGNIAS */
+.insignias { display: flex; align-items: center; gap: 70px; height: 100%; }
+.rojo { background: #e60000; border: 2px solid white; padding: 10px; font-size: 14px; font-weight: bold; text-align: center; line-height: 1.1; margin-top: 5px; }
+
+/* ESTRELLA */
+.estrella-amarilla { 
+    position: relative;
+    color: #b30000; 
+    width: 120px; 
+    height: 120px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    text-align: center; 
+    font-size: 10px; 
+    font-weight: bold; 
+    line-height: 1.0; 
+    margin-top: 27px; 
+    z-index: 10;
+    background: transparent;
+}
+
+/* DATOS CLIENTE */
+.seccion-datos { position: relative; margin-top: 10px; width: 80%; }
+
+
+.tabla-cliente { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+
+.tabla-cliente td { height: 35px; vertical-align: top; }
+
+
+.tabla-cliente label { font-size: 11px; font-weight: bold; display: block; margin-left: 3px; text-transform: uppercase; }
+
+.b-left { border-left: 1.5px solid #005596; }
+
+.b-top { border-top: 1.5px solid #005596; }
+
+.b-right { border-right: 1.5px solid #005596; }
+
+.b-bottom { border-bottom: 1.5px solid #005596; }
+
+
+/* ORDEN */
+.contenedor-orden { position: absolute; right: -230px; top: -110px; width: 220px; text-align: left; }
+.gota-derecha { width: 95px; margin-bottom: 5px; margin-left: 40px; margin-top: -50px;}
+.info-orden { font-weight: bold; font-size: 14px; }
+.checks { display: flex; flex-direction: column; gap: 5px; }
+
+/* SERVICIOS */
+.tabla-servicios { display: flex; border: 1.5px solid #005596; margin-top: 8px; width: 80%; }
+.col-serv { flex: 1; border-right: 1.5px solid #005596; padding: 0 0 10px 5px; }
+.col-serv p { font-size: 10px; font-weight: bold; margin: 4px 0; display: flex; align-items: center; gap: 5px; }
+.tit-blue { background: #005596; color: white; font-size: 10px; text-align: center; font-weight: bold; padding: 3px; margin-left: -5px; width: calc(100% + 5px); }
+.c-check { appearance: none; width: 12px; height: 12px; border: 1.5px solid #005596; border-radius: 50%; cursor: pointer; position: relative; }
+.c-check:checked::after { content: ''; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px; background: #005596; border-radius: 50%; }
+
+/* TABLA DE TRABAJO */
+.contenedor-principal-trabajo { border: 1.5px solid #005596; margin-top: 15px; width: 80%; position: relative; }
+.tit-warranty { background: #005596; color: white; font-size: 11px; font-weight: bold; padding: 3px 15px; width: fit-content; }
+.tabla-solo-servicios { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.tabla-solo-servicios th { background: #005596; color: white; font-size: 10px; padding: 5px; border: 1px solid white; }
+.tabla-solo-servicios td { height: 26px; border: 1px solid #005596; }
+.bg-blue-light { background-color: #d1e3f1 !important; }
+
+/* NUEVOS ESTILOS PARA EL WARRANTY SEPARADO (AGREGADO) */
+.contenedor-warranty {
+    display: flex;
+    align-items: stretch;
+    height: 26px;
+    background: white;
+}
+.tag-warranty-fijo {
+    background: #005596;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+}
+.espacio-input-warranty {
+    border-top: 1.5px solid #005596;
+    border-right: 1.5px solid #005596;
+    border-bottom: none; 
+    width: 102px; 
+    background: white;
+}
+.input-warranty-field {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    padding-left: 10px !important;
+    font-weight: bold;
+    font-size: 14px;
+    color: #000;
+    text-transform: uppercase;
+}
+
+/* BLOQUE INFERIOR */
+.bloque-inferior-factura { display: flex; width: 100%; border-top: 1.5px solid #005596; }
+.col-inferior { display: flex; flex-direction: column; }
+.col-1-recomendaciones { position: relative; border-right: 1.5px solid #005596; padding: 0px 10px 10px 0px; }
+.col-2-textos { border-right: 1.5px solid #005596; }
+.etiq-item { height: 26px; border-bottom: 1.5px solid #005596; color: #005596; font-weight: 900; font-size: 9px; text-align: right; padding: 6px 4px 0 0; }
+.aviso-pago-rojo { color: #e60000; font-size: 10px; font-weight: 900; text-align: center; padding-top: 15px; }
+.col-3-solo-total { border-right: 1.5px solid #005596; width: 150px; }
+.espacio-azul-vacio { height: 26px; border-bottom: 1.5px solid #005596; background: #d1e3f1; }
+.label-total-rojo { color: #e60000; font-size: 22px; font-weight: 900; text-align: center; padding-top: 10px; }
+.espacio-blanco-vacio { height: 26px; border-bottom: 1.5px solid #005596; }
+
+/* CUADRO DEL TOTAL FINAL */
+.cuadro-blanco-final { 
+    height: 55px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    overflow: visible;
+}
+
+.frase-roja { color: #e60000; font-size: 15px; font-weight: 900; text-align: center; margin: 8px 0; width: 80%; }
+
+/* INPUTS */
+#captura input, #captura textarea { border: none !important; outline: none !important; background: transparent; padding: 0 5px; font-family: inherit; font-size: 14px; }
+.input-totales { text-align: center; font-weight: bold; width: 100%; height: 100%; }
+
+/* EL AJUSTE DEFINITIVO PARA EL TOTAL */
+.input-final-total { 
+    text-align: center; 
+    font-size: 30px !important; 
+    font-weight: 900; 
+    width: 100%; 
+    height: 100%; 
+    color: #000;
+    display: block;
+    line-height: 0.5;
+    margin-top: 15px;
+}
+
+/* AJUSTE PARA QUE EL TEXTO SUBA Y TENGA ESPACIO A LA IZQUIERDA */
+.input-invisible { 
+    width: 100%; 
+    height: 100%; 
+    padding-left: 15px !important; 
+    padding-bottom: 12px !important; /* Sube el texto para que no pegue con la línea inferior */
+    box-sizing: border-box; 
+}
+
+.input-tabla { width: 100%; height: 100%; }
+.input-recomendaciones { width: 100%; height: 90px; resize: none; line-height: 22px; margin-top: 5px; }
+
+/* SERVICE AGREEMENT */
+.cuadro-acuerdo-flotante { position: absolute; right: -280px; top: 0; width: 275px; height: 515px; border: 1.5px solid #005596; background: white; display: flex; flex-direction: column; }
+.tit-blue-acuerdo { background: #005596; color: white; font-size: 10px; font-weight: bold; text-align: center; padding: 5px; }
+.cuerpo-acuerdo { padding: 5px 20px; font-size: 11px; line-height: 1.2; color: #000; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.txt-rojo { color: #e60000; font-weight: bold; margin: 3px 5; }
+.damage-row { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+.radio-group { display: flex; gap: 5px; }
+.radio-group label { display: flex; align-items: center; gap: 2px; font-size: 9px; cursor: pointer; }
+.checklist-msg { font-size: 7.2px; font-weight: bold; }
+.lbl-init { font-size: 8px; font-weight: bold; margin-left: 2px; }
+.lbl-init-abajo { font-size: 7px; font-weight: bold; position: absolute; right: 0; bottom: -10px; text-transform: uppercase; }
+.linea-f { border-bottom: 1px solid #000; display: flex; align-items: flex-end; margin-top: 2px; position: relative; }
+.in-ac { flex: 1; font-size: 11px; padding: 0 3px; }
+.firma-cliente { margin-top: 5px; text-align: center; }
+.firma-cliente label { font-size: 8px; font-weight: bold; display: block; margin-top: 2px; text-transform: uppercase; }
+.flex-row { display: flex; gap: 8px; margin-top: 3px; }
+
+.texto-agradecimiento-fondo { margin-top: 5px; width: 80%; padding-left: 5px; }
+.texto-agradecimiento-fondo p { color: #b30000; font-size: 19px; font-weight: 900; text-transform: uppercase; margin: 0; line-height: 1.1; }
