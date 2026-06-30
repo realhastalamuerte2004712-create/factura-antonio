@@ -253,70 +253,175 @@
     </div>
 
   <script>
-    let numFolio = localStorage.getItem('folio_antonio') || 1;
-    const spanFolio = document.getElementById('folio-val');
-    spanFolio.innerText = String(numFolio).padStart(5, '0');
+   let numFolio = Number(localStorage.getItem("folio_antonio")) || 1;
 
-    function generarImagen() {
-        const elemento = document.getElementById('captura');
-        const boton = document.querySelector('.btn-whatsapp');
-        
-        // Ocultar botón antes de capturar
-        boton.style.display = 'none';
+const spanFolio = document.getElementById("folio-val");
+const boton = document.querySelector(".btn-whatsapp");
 
-        html2canvas(elemento, {
-            scale: 3, 
-            useCORS: true,       
+spanFolio.textContent = String(numFolio).padStart(5, "0");
+
+boton.addEventListener("click", generarImagen);
+
+async function generarImagen() {
+
+    boton.disabled = true;
+    boton.innerHTML = "Generando...";
+
+    const elemento = document.getElementById("captura");
+
+    try {
+
+        const canvas = await html2canvas(elemento, {
+
+            scale: window.devicePixelRatio > 2 ? 2 : 3,
+
+            useCORS: true,
+
+            allowTaint: false,
+
             backgroundColor: "#ffffff",
-            windowWidth: 1400,
-            onclone: (documentoClonado) => {
-                // Aquí mantienes toda tu lógica de conversión de inputs a spans
-                const inputs = documentoClonado.querySelectorAll('input, textarea');
-                inputs.forEach(input => {
-                    if (input.type === 'text' || input.tagName === 'TEXTAREA' || input.type === 'number') {
-                        const span = documentoClonado.createElement('span');
-                        span.innerText = input.value;
-                        span.style.cssText = window.getComputedStyle(input).cssText;
-                        span.style.display = 'inline-block';
-                        
-                        // Aplicamos tus reglas de diseño (Folio, Warranty, Totales, etc.)
-                        if (input.classList.contains('input-invisible')) span.style.paddingLeft = '35px'; 
-                        if (input.classList.contains('input-final-total')) {
-                            span.style.fontSize = '30px'; 
-                            span.style.fontWeight = '900';
-                            span.style.display = 'block';
-                            span.style.textAlign = 'center';
-                            span.style.width = '100%';
-                            span.style.lineHeight = '0.8'; 
-                            span.style.marginTop = '10px';
+
+            logging: false,
+
+            imageTimeout: 15000,
+
+            scrollX: 0,
+
+            scrollY: -window.scrollY,
+
+            windowWidth: document.documentElement.scrollWidth,
+
+            windowHeight: document.documentElement.scrollHeight,
+
+            onclone: (doc) => {
+
+                doc.querySelectorAll("input, textarea").forEach(input => {
+
+                    if (input.type === "checkbox") {
+
+                        if (input.checked) {
+
+                            input.style.accentColor = "#005596";
+
                         }
-                        if (input.classList.contains('input-warranty-field')) {
-                            span.style.paddingLeft = '10px';
-                            span.style.fontWeight = 'bold';
-                            span.style.fontSize = '14px';
-                        }
-                        // Reemplazamos el input por el span convertido
-                        input.parentNode.replaceChild(span, input);
+
+                        return;
+
                     }
+
+                    if (input.type === "radio") {
+
+                        return;
+
+                    }
+
+                    const span = doc.createElement("span");
+
+                    span.textContent = input.value;
+
+                    span.style.cssText = getComputedStyle(input).cssText;
+
+                    span.style.whiteSpace = "pre-wrap";
+
+                    span.style.display = "inline-block";
+
+                    if (input.classList.contains("input-final-total")) {
+
+                        span.style.fontSize = "30px";
+
+                        span.style.fontWeight = "900";
+
+                        span.style.width = "100%";
+
+                        span.style.textAlign = "center";
+
+                    }
+
+                    input.parentNode.replaceChild(span, input);
+
                 });
+
             }
-        }).then(canvas => {
-            // Mostrar botón de nuevo
-            boton.style.display = 'block';
 
-            // Guardar imagen automáticamente
-            const link = document.createElement('a');
-            const actualFolio = String(numFolio).padStart(5, '0');
-            link.download = `Antonio_Rooter_Folio_${actualFolio}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-
-            // Incrementar folio y recargar para limpiar campos
-            numFolio++;
-            localStorage.setItem('folio_antonio', numFolio);
-            setTimeout(() => { location.reload(); }, 500);
         });
+
+        const nombre = `Antonio_Rooter_Folio_${String(numFolio).padStart(5, "0")}.png`;
+
+        canvas.toBlob(async (blob) => {
+
+            if (!blob) return;
+
+            const archivo = new File([blob], nombre, {
+                type: "image/png"
+            });
+
+            // iPhone y Android
+
+            if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+
+                try {
+
+                    await navigator.share({
+
+                        title: "Factura",
+
+                        files: [archivo]
+
+                    });
+
+                } catch (e) {
+
+                    console.log("Compartir cancelado");
+
+                }
+
+            } else {
+
+                const url = URL.createObjectURL(blob);
+
+                const enlace = document.createElement("a");
+
+                enlace.href = url;
+
+                enlace.download = nombre;
+
+                document.body.appendChild(enlace);
+
+                enlace.click();
+
+                enlace.remove();
+
+                URL.revokeObjectURL(url);
+
+            }
+
+            numFolio++;
+
+            localStorage.setItem("folio_antonio", numFolio);
+
+            location.reload();
+
+        }, "image/png");
+
     }
+
+    catch (error) {
+
+        console.error(error);
+
+        alert("No fue posible generar la factura.");
+
+    }
+
+    finally {
+
+        boton.disabled = false;
+
+        boton.innerHTML = "GENERAR PARA WHATSAPP";
+
+    }
+
+}
 </script>
 </body>
 </html>

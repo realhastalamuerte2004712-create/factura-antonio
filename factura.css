@@ -260,48 +260,25 @@ body {
 .texto-agradecimiento-fondo { margin-top: 5px; width: 80%; padding-left: 5px; }
 .texto-agradecimiento-fondo p { color: #b30000; font-size: 19px; font-weight: 900; text-transform: uppercase; margin: 0; line-height: 1.1; }
 
+/* Mejor compatibilidad con Safari */
 
-/* --- AJUSTE PARA CAPTURA DE IMAGEN DE ALTA CALIDAD --- */
-@media screen {
-    /* Forzamos que los bordes azules y fondos de color siempre sean sólidos en la captura */
-    .hoja-factura, 
-    .tabla-servicios, 
-    .contenedor-principal-trabajo, 
-    .tit-blue, 
-    .bg-blue-light,
-    .cuadro-acuerdo-flotante,
-    .header-azul {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        border-style: solid !important;
-    }
+img{
+    -webkit-user-drag:none;
+    user-select:none;
 }
 
-/* Mejora la nitidez del texto para la imagen */
-#captura {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+input,
+textarea{
+    -webkit-appearance:none;
+    appearance:none;
+    border-radius:0;
 }
 
-
-/* --- AJUSTE PARA CAPTURA DE IMAGEN DE ALTA CALIDAD --- */
-@media screen {
-    /* Forzamos que los bordes azules y fondos de color siempre sean sólidos en la captura */
-    .hoja-factura, 
-    .tabla-servicios, 
-    .contenedor-principal-trabajo, 
-    .tit-blue, 
-    .bg-blue-light,
-    .cuadro-acuerdo-flotante,
-    .header-azul {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        border-style: solid !important;
-    }
+.btn-whatsapp:disabled{
+    opacity:.6;
+    cursor:not-allowed;
 }
 
-/* Mejora la nitidez del texto para la imagen */
-#captura {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+canvas{
+    max-width:100%;
 }
