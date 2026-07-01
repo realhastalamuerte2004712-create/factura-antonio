@@ -56,7 +56,7 @@ body {
     align-items: center; 
     position: relative; 
 }
-.gota-logo { position: absolute; left: 10px; top: 0px; width: 85px; height: 140px; }
+.gota-logo { position: absolute; left: 10px; top: 0px; width: 85px; height: 140px; object-fit: contain; }
 .texto-header { margin-left: 60px; flex-grow: 0; margin-right: 40px; }
 .texto-header h1 { font-size: 45px; font-style: italic; font-weight: 900; line-height: 0.8; }
 .texto-header h2 { font-size: 19px; letter-spacing: 5px; margin-bottom: 5px; }
@@ -102,7 +102,7 @@ body {
 .tabla-cliente { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
 
-.tabla-cliente td { height: 35px; vertical-align: top; }
+.tabla-cliente td { min-height: 35px; vertical-align: top; }
 
 
 .tabla-cliente label { font-size: 11px; font-weight: bold; display: block; margin-left: 3px; text-transform: uppercase; }
@@ -132,6 +132,7 @@ body {
     margin-left: 40px; 
     margin-top: -50px;
     display: block;   /* Asegura que se comporte como bloque */
+    object-fit: contain;
 }
 
 /* SERVICIOS */
@@ -232,6 +233,17 @@ body {
     padding-left: 15px !important; 
     padding-bottom: 12px !important; /* Sube el texto para que no pegue con la línea inferior */
     box-sizing: border-box; 
+}
+
+.input-area {
+    resize: none;
+    overflow: hidden;
+    min-height: 20px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.3;
+    display: block;
 }
 
 .input-tabla { width: 100%; height: 100%; }

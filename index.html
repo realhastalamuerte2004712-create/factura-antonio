@@ -47,13 +47,13 @@
                     <td colspan="4"></td>
                     <td colspan="2" class="b-left b-top b-right b-bottom">
                         <label>DATE:</label>
-                        <input type="text" id="campo-fecha" class="input-invisible" placeholder="DD/MM/AA" inputmode="numeric" maxlength="8">
+                        <input type="text" id="campo-fecha" class="input-invisible" placeholder="DD / MM / AA" inputmode="numeric" maxlength="12">
                     </td>
                 </tr>
                 <tr>
                     <td colspan="3" class="b-left b-top b-right b-bottom">
                         <label>CUSTOMER NAME:</label>
-                        <input type="text" class="input-invisible">
+                        <textarea class="input-invisible input-area" rows="1"></textarea>
                     </td>
                     <td colspan="3" class="b-top b-right b-bottom">
                         <label>SERVICE TECHNICIAN:</label>
@@ -63,11 +63,11 @@
                 <tr>
                     <td colspan="3" class="b-left b-right b-bottom">
                         <label>JOB ADDRESS:</label>
-                        <input type="text" class="input-invisible">
+                        <textarea class="input-invisible input-area" rows="1"></textarea>
                     </td>
                     <td colspan="3" class="b-right b-bottom">
                         <label>CROSS STREET:</label>
-                        <input type="text" class="input-invisible">
+                        <textarea class="input-invisible input-area" rows="1"></textarea>
                     </td>
                 </tr>
                 <tr>
@@ -289,7 +289,7 @@ if (campoFecha) {
         if (digitos.length > 0) partes.push(digitos.slice(0, 2));
         if (digitos.length > 2) partes.push(digitos.slice(2, 4));
         if (digitos.length > 4) partes.push(digitos.slice(4, 6));
-        campoFecha.value = partes.join("/");
+        campoFecha.value = partes.join(" / ");
     });
 }
 
@@ -299,11 +299,30 @@ function autoCrecer(el) {
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
 }
-document.querySelectorAll(".input-desc, .input-recomendaciones").forEach((campo) => {
+document.querySelectorAll(".input-desc, .input-recomendaciones, .input-area").forEach((campo) => {
     campo.addEventListener("input", () => autoCrecer(campo));
 });
 
 boton.addEventListener("click", generarImagen);
+
+// Mide el área real completa del recibo, incluyendo las cajas que sobresalen
+// (Service Agreement, ZELLE/CASH/CHECK) por estar posicionadas de forma absoluta.
+// Sin esto, html2canvas a veces recorta o "achica" esas cajas al generar la imagen.
+function medirAreaCompleta(elemento) {
+    const base = elemento.getBoundingClientRect();
+    let maxRight = base.right;
+    let maxBottom = base.bottom;
+    elemento.querySelectorAll("*").forEach((hijo) => {
+        const r = hijo.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) return;
+        if (r.right > maxRight) maxRight = r.right;
+        if (r.bottom > maxBottom) maxBottom = r.bottom;
+    });
+    return {
+        width: Math.ceil(maxRight - base.left),
+        height: Math.ceil(maxBottom - base.top)
+    };
+}
 
 async function generarImagen() {
 
@@ -314,8 +333,12 @@ async function generarImagen() {
 
     try {
 
+        const areaCompleta = medirAreaCompleta(elemento);
+
         const canvas = await html2canvas(elemento, {
-            scale: window.devicePixelRatio > 2 ? 2 : 3,
+            scale: 3,
+            width: areaCompleta.width,
+            height: areaCompleta.height,
             useCORS: true,
             allowTaint: false,
             backgroundColor: "#ffffff",
@@ -337,7 +360,7 @@ async function generarImagen() {
                         return;
                     }
                     const span = doc.createElement("span");
-                    span.textContent = input.value;
+                    span.textContent = input.value.toUpperCase();
                     span.style.cssText = getComputedStyle(input).cssText;
                     span.style.whiteSpace = "pre-wrap";
                     span.style.wordBreak = "break-word";
