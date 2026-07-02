@@ -105,7 +105,30 @@ body {
 .tabla-cliente td { min-height: 35px; vertical-align: top; }
 
 
-.tabla-cliente label { font-size: 11px; font-weight: bold; display: block; margin-left: 3px; text-transform: uppercase; }
+.tabla-cliente label { font-size: 11px; font-weight: bold; margin-left: 3px; text-transform: uppercase; }
+
+/* Envuelve label + valor. El label queda arriba y el valor abajo, separados
+   siempre por la misma distancia -- nunca "pegados". */
+.campo-linea {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+/* Este contenedor es el que le da la sangría fija al valor del campo.
+   Al no tocarse nunca en el "onclone" de la captura para WhatsApp, la
+   sangría se conserva igual en pantalla y en la imagen final. */
+.valor-linea {
+    padding-left: 20px;
+    padding-top: 3px;
+    flex: 1;
+    min-height: 0;
+}
+.valor-linea .input-invisible,
+.valor-linea .input-area {
+    width: 100%;
+    height: 100%;
+}
 
 .b-left { border-left: 1.5px solid #005596; }
 
@@ -226,12 +249,13 @@ body {
     margin-top: 15px;
 }
 
-/* AJUSTE PARA QUE EL TEXTO SUBA Y TENGA ESPACIO A LA IZQUIERDA */
+/* Campo de valor: ya NO usa padding para separarse del label (ese trabajo lo
+   hace el "gap" de .campo-linea). Solo controla su propio tamaño interno. */
 .input-invisible { 
     width: 100%; 
     height: 100%; 
-    padding-left: 15px !important; 
-    padding-bottom: 12px !important; /* Sube el texto para que no pegue con la línea inferior */
+    padding-left: 0 !important; 
+    padding-bottom: 4px !important; 
     box-sizing: border-box; 
 }
 
@@ -247,7 +271,26 @@ body {
 }
 
 .input-tabla { width: 100%; height: 100%; }
-.input-desc { width: 100%; min-height: 24px; resize: none; overflow: hidden; white-space: pre-wrap; line-height: 1.3; display: block; }
+
+/* DESCRIPTION OF SERVICES AND MATERIALS: el ancho y la altura de la celda quedan
+   FIJOS siempre (nunca crecen ni empujan la tabla). El texto hace salto de línea
+   automático dentro de la caja (word-wrap) y, si no alcanza, se desplaza con
+   scroll vertical interno -- igual que un campo de texto de un formulario
+   profesional. Ancho: nunca cambia. Alto: nunca cambia. Sin scroll horizontal. */
+.input-desc {
+    display: block;
+    width: 100%;
+    height: 24px;          /* alto FIJO de la fila, siempre, sin excepción */
+    max-height: 24px;
+    box-sizing: border-box;
+    padding-left: 6px !important;   /* pequeño respiro al inicio del texto */
+    padding-right: 6px !important;  /* pequeño respiro al final del texto, antes de la línea */
+    resize: none;
+    overflow: hidden;
+    white-space: nowrap;   /* una sola línea: si no cabe, el JS mueve el sobrante a la siguiente fila */
+    line-height: 1.3;
+}
+
 .input-recomendaciones { width: 100%; height: 90px; resize: none; line-height: 22px; margin-top: 5px; overflow-y: auto; white-space: pre-wrap; }
 
 /* SERVICE AGREEMENT */

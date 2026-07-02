@@ -46,36 +46,46 @@
                 <tr>
                     <td colspan="4"></td>
                     <td colspan="2" class="b-left b-top b-right b-bottom">
-                        <label>DATE:</label>
-                        <input type="text" id="campo-fecha" class="input-invisible" placeholder="DD / MM / AA" inputmode="numeric" maxlength="12">
+                        <div class="campo-linea">
+                            <label>DATE:</label>
+                            <div class="valor-linea"><input type="text" id="campo-fecha" class="input-invisible" placeholder="DD / MM / AA" inputmode="numeric" maxlength="12"></div>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="3" class="b-left b-top b-right b-bottom">
-                        <label>CUSTOMER NAME:</label>
-                        <textarea class="input-invisible input-area" rows="1"></textarea>
+                        <div class="campo-linea">
+                            <label>CUSTOMER NAME:</label>
+                            <div class="valor-linea"><textarea class="input-invisible input-area" rows="1"></textarea></div>
+                        </div>
                     </td>
                     <td colspan="3" class="b-top b-right b-bottom">
-                        <label>SERVICE TECHNICIAN:</label>
-                        <input type="text" class="input-invisible">
+                        <div class="campo-linea">
+                            <label>SERVICE TECHNICIAN:</label>
+                            <div class="valor-linea"><input type="text" class="input-invisible"></div>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="3" class="b-left b-right b-bottom">
-                        <label>JOB ADDRESS:</label>
-                        <textarea class="input-invisible input-area" rows="1"></textarea>
+                        <div class="campo-linea">
+                            <label>JOB ADDRESS:</label>
+                            <div class="valor-linea"><textarea class="input-invisible input-area" rows="1"></textarea></div>
+                        </div>
                     </td>
                     <td colspan="3" class="b-right b-bottom">
-                        <label>CROSS STREET:</label>
-                        <textarea class="input-invisible input-area" rows="1"></textarea>
+                        <div class="campo-linea">
+                            <label>CROSS STREET:</label>
+                            <div class="valor-linea"><textarea class="input-invisible input-area" rows="1"></textarea></div>
+                        </div>
                     </td>
                 </tr>
                 <tr>
-                    <td class="b-left b-right b-bottom"><label>CITY:</label><input type="text" class="input-invisible"></td>
-                    <td class="b-right b-bottom"><label>STATE:</label><input type="text" class="input-invisible"></td>
-                    <td class="b-right b-bottom"><label>ZIP:</label><input type="text" class="input-invisible"></td>
-                    <td class="b-right b-bottom"><label>JOB PHONE:</label><input type="text" class="input-invisible"></td>
-                    <td colspan="2" class="b-right b-bottom"><label>MAP:</label><input type="text" class="input-invisible"></td>
+                    <td class="b-left b-right b-bottom"><div class="campo-linea"><label>CITY:</label><div class="valor-linea"><input type="text" class="input-invisible"></div></div></td>
+                    <td class="b-right b-bottom"><div class="campo-linea"><label>STATE:</label><div class="valor-linea"><input type="text" class="input-invisible"></div></div></td>
+                    <td class="b-right b-bottom"><div class="campo-linea"><label>ZIP:</label><div class="valor-linea"><input type="text" class="input-invisible"></div></div></td>
+                    <td class="b-right b-bottom"><div class="campo-linea"><label>JOB PHONE:</label><div class="valor-linea"><input type="text" class="input-invisible"></div></div></td>
+                    <td colspan="2" class="b-right b-bottom"><div class="campo-linea"><label>MAP:</label><div class="valor-linea"><input type="text" class="input-invisible"></div></div></td>
                 </tr>
             </table>
 
@@ -293,14 +303,50 @@ if (campoFecha) {
     });
 }
 
-// CRECIMIENTO AUTOMÁTICO: para que el texto largo salte de línea en vez de
-// seguir de corrido (descripción de servicios y recomendaciones).
+// CRECIMIENTO AUTOMÁTICO: solo para Customer Name / Job Address / Cross Street
+// y Recommendations, donde SÍ queremos que el cuadro se ajuste al contenido.
+// IMPORTANTE: ".input-desc" (Description of Services and Materials) se excluye
+// a propósito. Esa celda tiene alto fijo por CSS (ver .input-desc en el CSS);
+// si se le aplicara este auto-crecimiento, cada fila cambiaría de tamaño de
+// forma independiente y rompería la alineación de la tabla completa.
 function autoCrecer(el) {
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
 }
-document.querySelectorAll(".input-desc, .input-recomendaciones, .input-area").forEach((campo) => {
+document.querySelectorAll(".input-recomendaciones, .input-area").forEach((campo) => {
     campo.addEventListener("input", () => autoCrecer(campo));
+});
+
+// DESCRIPTION OF SERVICES AND MATERIALS: cuando el texto de una fila llega al
+// borde derecho del cuadro, el sobrante NO se queda en la misma fila (no hay
+// wrap ni scroll ahí): se traslada automáticamente al INICIO de la fila
+// siguiente y el cursor se mueve con él, para que el usuario siga escribiendo
+// de corrido, como si fuera un solo renglón continuo repartido en varias filas.
+const camposDescripcion = Array.from(document.querySelectorAll(".input-desc"));
+
+function pasarDesbordeAlaSiguiente(indice) {
+    const actual = camposDescripcion[indice];
+    if (!actual) return;
+
+    while (actual.scrollWidth > actual.clientWidth + 1 && actual.value.length > 0) {
+        const siguiente = camposDescripcion[indice + 1];
+        if (!siguiente) {
+            // No hay más filas después de la última: ya no se puede seguir,
+            // se detiene el desborde (no se pierde lo ya escrito).
+            actual.value = actual.value.slice(0, -1);
+            break;
+        }
+        const ultimoCaracter = actual.value.slice(-1);
+        actual.value = actual.value.slice(0, -1);
+        siguiente.value = ultimoCaracter + siguiente.value;
+        siguiente.focus();
+        siguiente.setSelectionRange(1, 1);
+        pasarDesbordeAlaSiguiente(indice + 1);
+    }
+}
+
+camposDescripcion.forEach((campo, indice) => {
+    campo.addEventListener("input", () => pasarDesbordeAlaSiguiente(indice));
 });
 
 boton.addEventListener("click", generarImagen);
@@ -371,6 +417,20 @@ async function generarImagen() {
                         span.style.fontWeight = "900";
                         span.style.width = "100%";
                         span.style.textAlign = "center";
+                    }
+                    if (input.classList.contains("input-desc")) {
+                        // Igual que en pantalla: una sola línea, ancho y alto fijos,
+                        // con un pequeño respiro a los lados para que el texto no
+                        // toque las líneas de la celda.
+                        span.style.display = "block";
+                        span.style.height = "24px";
+                        span.style.maxHeight = "24px";
+                        span.style.overflow = "hidden";
+                        span.style.whiteSpace = "nowrap";
+                        span.style.width = "100%";
+                        span.style.boxSizing = "border-box";
+                        span.style.paddingLeft = "6px";
+                        span.style.paddingRight = "6px";
                     }
                     input.parentNode.replaceChild(span, input);
                 });
