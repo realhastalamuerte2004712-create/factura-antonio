@@ -56,13 +56,13 @@
                     <td colspan="3" class="b-left b-top b-right b-bottom">
                         <div class="campo-linea">
                             <label>CUSTOMER NAME:</label>
-                            <div class="valor-linea"><textarea class="input-invisible input-area" rows="1"></textarea></div>
+                            <div class="valor-linea valor-largo"><textarea class="input-invisible input-area" rows="1"></textarea></div>
                         </div>
                     </td>
                     <td colspan="3" class="b-top b-right b-bottom">
                         <div class="campo-linea">
                             <label>SERVICE TECHNICIAN:</label>
-                            <div class="valor-linea"><input type="text" class="input-invisible"></div>
+                            <div class="valor-linea valor-largo"><input type="text" class="input-invisible"></div>
                         </div>
                     </td>
                 </tr>
@@ -70,13 +70,13 @@
                     <td colspan="3" class="b-left b-right b-bottom">
                         <div class="campo-linea">
                             <label>JOB ADDRESS:</label>
-                            <div class="valor-linea"><textarea class="input-invisible input-area" rows="1"></textarea></div>
+                            <div class="valor-linea valor-largo"><textarea class="input-invisible input-area" rows="1"></textarea></div>
                         </div>
                     </td>
                     <td colspan="3" class="b-right b-bottom">
                         <div class="campo-linea">
                             <label>CROSS STREET:</label>
-                            <div class="valor-linea"><textarea class="input-invisible input-area" rows="1"></textarea></div>
+                            <div class="valor-linea valor-largo"><textarea class="input-invisible input-area" rows="1"></textarea></div>
                         </div>
                     </td>
                 </tr>
@@ -204,7 +204,11 @@
                     <div class="linea-f">ORIGINAL ESTIMATE $ <input type="text" class="in-ac"></div>
 
                     <div class="firma-cliente">
-                        <div class="linea-f">X <input type="text" class="in-ac"></div>
+                        <div class="linea-f linea-firma">
+                            X
+                            <canvas class="firma-canvas"></canvas>
+                            <button type="button" class="btn-borrar-firma oculto-en-captura" title="Borrar firma">Borrar</button>
+                        </div>
                         <label>CUSTOMER SIGNATURE</label>
                     </div>
 
@@ -221,7 +225,11 @@
                     <div class="linea-f">ACTUAL TOTAL $ <input type="text" class="in-ac"></div>
 
                     <div class="firma-cliente">
-                        <div class="linea-f">X <input type="text" class="in-ac"></div>
+                        <div class="linea-f linea-firma">
+                            X
+                            <canvas class="firma-canvas"></canvas>
+                            <button type="button" class="btn-borrar-firma oculto-en-captura" title="Borrar firma">Borrar</button>
+                        </div>
                         <label>CUSTOMER SIGNATURE</label>
                     </div>
                 </div>
@@ -278,6 +286,72 @@
 
 const spanFolio = document.getElementById("folio-val");
 const boton = document.querySelector(".btn-whatsapp");
+
+// FIRMA ELECTRÓNICA: permite dibujar la firma con el mouse, el dedo o el
+// lápiz (pointer events cubre los tres casos). El trazo se dibuja en un
+// <canvas>, que html2canvas captura de forma nativa junto con el resto de
+// la factura, así que la firma queda incluida en la imagen final.
+function inicializarFirma(canvas) {
+    const ctx = canvas.getContext("2d");
+
+    function ajustarResolucion() {
+        const rect = canvas.getBoundingClientRect();
+        const anterior = canvas.toDataURL();
+        canvas.width = rect.width * 3;   // mismo factor que el "scale" de html2canvas, para que no se vea borrosa
+        canvas.height = rect.height * 3;
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "#000000";
+    }
+    ajustarResolucion();
+
+    let dibujando = false;
+    let ultimoX = 0;
+    let ultimoY = 0;
+
+    function posicion(evento) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: (evento.clientX - rect.left) * (canvas.width / rect.width),
+            y: (evento.clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    canvas.addEventListener("pointerdown", (evento) => {
+        dibujando = true;
+        const p = posicion(evento);
+        ultimoX = p.x;
+        ultimoY = p.y;
+        canvas.setPointerCapture(evento.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (evento) => {
+        if (!dibujando) return;
+        const p = posicion(evento);
+        ctx.beginPath();
+        ctx.moveTo(ultimoX, ultimoY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        ultimoX = p.x;
+        ultimoY = p.y;
+    });
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach((evt) => {
+        canvas.addEventListener(evt, () => { dibujando = false; });
+    });
+
+    // Botón "Borrar" (solo visible en pantalla, nunca en la imagen final)
+    const contenedor = canvas.closest(".linea-firma");
+    const botonBorrar = contenedor ? contenedor.querySelector(".btn-borrar-firma") : null;
+    if (botonBorrar) {
+        botonBorrar.addEventListener("click", () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+    }
+}
+
+document.querySelectorAll(".firma-canvas").forEach(inicializarFirma);
 const overlay = document.getElementById("preview-overlay");
 const previewImg = document.getElementById("preview-img");
 const btnGuardar = document.getElementById("btn-guardar");
@@ -347,6 +421,20 @@ function pasarDesbordeAlaSiguiente(indice) {
 
 camposDescripcion.forEach((campo, indice) => {
     campo.addEventListener("input", () => pasarDesbordeAlaSiguiente(indice));
+
+    // Al presionar Enter dentro de una fila de descripción, NUNCA se debe
+    // crear una segunda línea dentro del mismo cuadro (es de una sola línea).
+    // En vez de eso, el cursor pasa directamente a la fila siguiente.
+    campo.addEventListener("keydown", (evento) => {
+        if (evento.key === "Enter") {
+            evento.preventDefault();
+            const siguiente = camposDescripcion[indice + 1];
+            if (siguiente) {
+                siguiente.focus();
+                siguiente.setSelectionRange(siguiente.value.length, siguiente.value.length);
+            }
+        }
+    });
 });
 
 boton.addEventListener("click", generarImagen);
@@ -395,6 +483,10 @@ async function generarImagen() {
             windowWidth: document.documentElement.scrollWidth,
             windowHeight: document.documentElement.scrollHeight,
             onclone: (doc) => {
+                // El botón de "Borrar" firma es solo para uso en pantalla,
+                // nunca debe salir en la imagen final.
+                doc.querySelectorAll(".oculto-en-captura").forEach(el => el.remove());
+
                 doc.querySelectorAll("input, textarea").forEach(input => {
                     if (input.type === "checkbox") {
                         if (input.checked) {
@@ -431,6 +523,18 @@ async function generarImagen() {
                         span.style.boxSizing = "border-box";
                         span.style.paddingLeft = "6px";
                         span.style.paddingRight = "6px";
+                    }
+                    // WORK CODE / ESTIMATE / ACTUAL siempre centrados, también
+                    // en la imagen final (no depende de que el navegador copie
+                    // bien el text-align al span).
+                    if (input.closest(".tabla-solo-servicios")) {
+                        const celda = input.closest("td");
+                        const indiceColumna = celda ? celda.cellIndex : -1;
+                        if (indiceColumna === 1 || indiceColumna === 3 || indiceColumna === 4) {
+                            span.style.textAlign = "center";
+                            span.style.display = "block";
+                            span.style.width = "100%";
+                        }
                     }
                     input.parentNode.replaceChild(span, input);
                 });
