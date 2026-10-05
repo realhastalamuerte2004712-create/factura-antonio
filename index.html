@@ -4,23 +4,12 @@
     <meta charset="UTF-8">
     <title>Antonio Rooter - Factura Profesional</title>
     <link rel="stylesheet" href="factura.css">
-    <style>
-        /* Botón de PDF en rojo (sobrescribe el color definido en factura.css) */
-        #btn-pdf {
-            background: #d32f2f !important;
-            border-color: #d32f2f !important;
-            color: #ffffff !important;
-        }
-        #btn-pdf:active {
-            background: #b71c1c !important;
-        }
-    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-    <button class="btn-whatsapp">
+    <button class="btn-whatsapp" onclick="generarImagen()">
         GENERAR PARA WHATSAPP
     </button>
 
@@ -297,12 +286,6 @@
   <script>
    let numFolio = Number(localStorage.getItem("folio_antonio")) || 1;
 
-// CALIDAD: se intenta generar a escala 4. Si la factura es tan grande que
-// superaría el límite de canvas de Safari/iPad (~16 millones de píxeles),
-// la escala baja sola lo mínimo necesario para que nunca falle ni salga borrosa.
-const ESCALA_DESEADA = 4;
-const MAX_PIXELES = 16000000;
-
 const spanFolio = document.getElementById("folio-val");
 const boton = document.querySelector(".btn-whatsapp");
 
@@ -315,8 +298,9 @@ function inicializarFirma(canvas) {
 
     function ajustarResolucion() {
         const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * ESCALA_DESEADA;   // mismo factor que el "scale" de html2canvas, para que no se vea borrosa
-        canvas.height = rect.height * ESCALA_DESEADA;
+        const anterior = canvas.toDataURL();
+        canvas.width = rect.width * 3;   // mismo factor que el "scale" de html2canvas, para que no se vea borrosa
+        canvas.height = rect.height * 3;
         ctx.lineWidth = 3;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
@@ -372,14 +356,12 @@ function inicializarFirma(canvas) {
 document.querySelectorAll(".firma-canvas").forEach(inicializarFirma);
 const overlay = document.getElementById("preview-overlay");
 const previewImg = document.getElementById("preview-img");
-const btnPdf = document.getElementById("btn-pdf");
 const btnGuardar = document.getElementById("btn-guardar");
 const btnCompartir = document.getElementById("btn-compartir");
 const btnCerrar = document.getElementById("btn-cerrar");
 
 let archivoActual = null; // File listo para compartir
 let urlActual = null;     // blob URL para mostrar/guardar
-let canvasActual = null;  // canvas en alta resolución, para el PDF
 
 spanFolio.textContent = String(numFolio).padStart(5, "0");
 
@@ -509,8 +491,6 @@ camposEstimateActual.forEach((campo) => {
     });
 });
 
-// El botón se enlaza SOLO aquí (antes tenía además un onclick en el HTML,
-// lo que hacía que generarImagen() corriera dos veces por cada clic).
 boton.addEventListener("click", generarImagen);
 
 // Mide el área real completa del recibo, incluyendo las cajas que sobresalen
@@ -547,13 +527,9 @@ async function generarImagen() {
     try {
 
         const areaCompleta = medirAreaCompleta(elemento);
-        const escala = Math.min(
-            ESCALA_DESEADA,
-            Math.sqrt(MAX_PIXELES / (areaCompleta.width * areaCompleta.height))
-        );
 
         const canvas = await html2canvas(elemento, {
-            scale: escala,
+            scale: 3,
             width: areaCompleta.width,
             height: areaCompleta.height,
             useCORS: true,
@@ -636,7 +612,6 @@ async function generarImagen() {
         if (!blob) throw new Error("No se pudo generar la imagen");
 
         archivoActual = new File([blob], nombre, { type: "image/png" });
-        canvasActual = canvas;
 
         if (urlActual) URL.revokeObjectURL(urlActual);
         urlActual = URL.createObjectURL(blob);
@@ -646,7 +621,6 @@ async function generarImagen() {
         // El folio avanza solo cuando la imagen ya se generó correctamente.
         numFolio++;
         localStorage.setItem("folio_antonio", numFolio);
-        spanFolio.textContent = String(numFolio).padStart(5, "0");
 
     } catch (error) {
 
@@ -661,42 +635,6 @@ async function generarImagen() {
     }
 
 }
-
-// DESCARGAR PDF: usa directamente el canvas en alta resolución (sin volver a
-// decodificar la imagen) y crea una hoja de 8.5" de ancho con las MISMAS
-// proporciones de la factura, así la imagen ocupa toda la página sin
-// reducirse ni dejar márgenes vacíos.
-btnPdf.addEventListener("click", () => {
-    if (!canvasActual || !archivoActual) return;
-
-    if (!window.jspdf) {
-        alert("No se pudo cargar la librería de PDF. Revisa tu conexión a internet e inténtalo de nuevo.");
-        return;
-    }
-
-    try {
-        const { jsPDF } = window.jspdf;
-
-        const anchoPx = canvasActual.width;
-        const altoPx = canvasActual.height;
-
-        const pageW = 215.9;                        // 8.5 pulgadas en mm
-        const pageH = pageW * (altoPx / anchoPx);   // misma proporción que la factura
-
-        const pdf = new jsPDF({
-            orientation: pageH >= pageW ? "portrait" : "landscape",
-            unit: "mm",
-            format: [pageW, pageH],
-            compress: true
-        });
-
-        pdf.addImage(canvasActual, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
-        pdf.save(archivoActual.name.replace(/\.png$/i, ".pdf"));
-    } catch (error) {
-        console.error(error);
-        alert("No fue posible generar el PDF.");
-    }
-});
 
 // IMPORTANTE: este click es un gesto de usuario NUEVO y directo (sin await antes),
 // por eso iOS Safari sí permite que navigator.share() funcione aquí.
@@ -717,8 +655,7 @@ btnCompartir.addEventListener("click", () => {
 btnGuardar.addEventListener("click", () => {
     if (!urlActual) return;
 
-    const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+    const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     if (esIOS) {
         alert("Mantén presionada la imagen de arriba y elige 'Agregar a Fotos'.");
