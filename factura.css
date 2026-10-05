@@ -177,7 +177,7 @@ body {
 .tit-warranty { background: #005596; color: white; font-size: 11px; font-weight: bold; padding: 3px 15px; width: fit-content; }
 .tabla-solo-servicios { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .tabla-solo-servicios th { background: #005596; color: white; font-size: 10px; padding: 5px; border: 1px solid white; }
-.tabla-solo-servicios td { min-height: 26px; border: 1px solid #005596; vertical-align: top; }
+.tabla-solo-servicios td { min-height: 26px; border: 1.5px solid #005596; vertical-align: top; } /* mismo grosor que el marco exterior, para que el azul se vea parejo */
 .bg-blue-light { background-color: #d1e3f1 !important; }
 
 /* NUEVOS ESTILOS PARA EL WARRANTY SEPARADO (AGREGADO) */

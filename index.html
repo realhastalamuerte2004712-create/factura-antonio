@@ -4,11 +4,23 @@
     <meta charset="UTF-8">
     <title>Antonio Rooter - Factura Profesional</title>
     <link rel="stylesheet" href="factura.css">
+    <style>
+        /* Botón de PDF en rojo (sobrescribe el color definido en factura.css) */
+        #btn-pdf {
+            background: #d32f2f !important;
+            border-color: #d32f2f !important;
+            color: #ffffff !important;
+        }
+        #btn-pdf:active {
+            background: #b71c1c !important;
+        }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-    <button class="btn-whatsapp" onclick="generarImagen()">
+    <button class="btn-whatsapp">
         GENERAR PARA WHATSAPP
     </button>
 
@@ -48,7 +60,7 @@
                     <td colspan="2" class="b-left b-top b-right b-bottom">
                         <div class="campo-linea">
                             <label>DATE:</label>
-                            <div class="valor-linea"><input type="text" id="campo-fecha" class="input-invisible" placeholder="DD / MM / AA" inputmode="numeric" maxlength="12"></div>
+                            <div class="valor-linea"><input type="text" id="campo-fecha" class="input-invisible" readonly></div>
                         </div>
                     </td>
                 </tr>
@@ -274,6 +286,7 @@
         <div class="preview-box">
             <img id="preview-img" alt="Factura generada">
             <div class="preview-botones">
+                <button id="btn-pdf" class="btn-preview btn-pdf">📄 Descargar PDF</button>
                 <button id="btn-guardar" class="btn-preview btn-guardar">💾 Guardar en Fotos</button>
                 <button id="btn-compartir" class="btn-preview btn-compartir">📲 Compartir por WhatsApp</button>
                 <button id="btn-cerrar" class="btn-preview btn-cerrar">Cerrar</button>
@@ -283,6 +296,12 @@
 
   <script>
    let numFolio = Number(localStorage.getItem("folio_antonio")) || 1;
+
+// CALIDAD: se intenta generar a escala 4. Si la factura es tan grande que
+// superaría el límite de canvas de Safari/iPad (~16 millones de píxeles),
+// la escala baja sola lo mínimo necesario para que nunca falle ni salga borrosa.
+const ESCALA_DESEADA = 4;
+const MAX_PIXELES = 16000000;
 
 const spanFolio = document.getElementById("folio-val");
 const boton = document.querySelector(".btn-whatsapp");
@@ -296,9 +315,8 @@ function inicializarFirma(canvas) {
 
     function ajustarResolucion() {
         const rect = canvas.getBoundingClientRect();
-        const anterior = canvas.toDataURL();
-        canvas.width = rect.width * 3;   // mismo factor que el "scale" de html2canvas, para que no se vea borrosa
-        canvas.height = rect.height * 3;
+        canvas.width = rect.width * ESCALA_DESEADA;   // mismo factor que el "scale" de html2canvas, para que no se vea borrosa
+        canvas.height = rect.height * ESCALA_DESEADA;
         ctx.lineWidth = 3;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
@@ -354,28 +372,29 @@ function inicializarFirma(canvas) {
 document.querySelectorAll(".firma-canvas").forEach(inicializarFirma);
 const overlay = document.getElementById("preview-overlay");
 const previewImg = document.getElementById("preview-img");
+const btnPdf = document.getElementById("btn-pdf");
 const btnGuardar = document.getElementById("btn-guardar");
 const btnCompartir = document.getElementById("btn-compartir");
 const btnCerrar = document.getElementById("btn-cerrar");
 
 let archivoActual = null; // File listo para compartir
 let urlActual = null;     // blob URL para mostrar/guardar
+let canvasActual = null;  // canvas en alta resolución, para el PDF
 
 spanFolio.textContent = String(numFolio).padStart(5, "0");
 
-// FORMATO AUTOMÁTICO DE FECHA: el usuario solo escribe números y aquí se
-// insertan las diagonales (DD/MM/AA) para que no se vea pegado.
+// FECHA AUTOMÁTICA EN FORMATO USA (MM/DD/AAAA): el cliente ya no la toca ni
+// la busca. Se pone sola al cargar la página y se vuelve a poner justo antes
+// de generar la imagen, para que quede el día real en que se imprime.
 const campoFecha = document.getElementById("campo-fecha");
-if (campoFecha) {
-    campoFecha.addEventListener("input", () => {
-        let digitos = campoFecha.value.replace(/\D/g, "").slice(0, 6);
-        let partes = [];
-        if (digitos.length > 0) partes.push(digitos.slice(0, 2));
-        if (digitos.length > 2) partes.push(digitos.slice(2, 4));
-        if (digitos.length > 4) partes.push(digitos.slice(4, 6));
-        campoFecha.value = partes.join(" / ");
-    });
+function fechaUSAHoy() {
+    const hoy = new Date();
+    const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+    const dd = String(hoy.getDate()).padStart(2, "0");
+    const yyyy = hoy.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
 }
+if (campoFecha) campoFecha.value = fechaUSAHoy();
 
 // CRECIMIENTO AUTOMÁTICO: solo para Customer Name / Job Address / Cross Street
 // y Recommendations, donde SÍ queremos que el cuadro se ajuste al contenido.
@@ -394,11 +413,24 @@ document.querySelectorAll(".input-recomendaciones, .input-area").forEach((campo)
 // DESCRIPTION OF SERVICES AND MATERIALS: cuando el texto de una fila llega al
 // borde derecho del cuadro, el sobrante NO se queda en la misma fila (no hay
 // wrap ni scroll ahí): se traslada automáticamente al INICIO de la fila
-// siguiente y el cursor se mueve con él, para que el usuario siga escribiendo
-// de corrido, como si fuera un solo renglón continuo repartido en varias filas.
+// siguiente, para que el usuario siga escribiendo de corrido, como si fuera
+// un solo renglón continuo repartido en varias filas. Y al revés: si el
+// usuario borra texto y una fila queda con espacio libre, el texto de la
+// fila siguiente SUBE de vuelta para llenar ese espacio (antes se quedaba
+// trabado en la fila donde había caído).
 const camposDescripcion = Array.from(document.querySelectorAll(".input-desc"));
 
-function pasarDesbordeAlaSiguiente(indice) {
+// Prueba si un texto cabe en una fila sin que el usuario vea el cambio:
+// se asigna, se mide, y se repone el valor que había.
+function cabeEnFila(campo, texto) {
+    const anterior = campo.value;
+    campo.value = texto;
+    const cabe = campo.scrollWidth <= campo.clientWidth + 1;
+    campo.value = anterior;
+    return cabe;
+}
+
+function empujarDesborde(indice) {
     const actual = camposDescripcion[indice];
     if (!actual) return;
 
@@ -415,12 +447,32 @@ function pasarDesbordeAlaSiguiente(indice) {
         siguiente.value = ultimoCaracter + siguiente.value;
         siguiente.focus();
         siguiente.setSelectionRange(1, 1);
-        pasarDesbordeAlaSiguiente(indice + 1);
+        empujarDesborde(indice + 1);
     }
 }
 
+// Si la fila "indice" quedó con espacio libre, recupera letras desde el
+// INICIO de la fila siguiente para llenar ese espacio, y repite en cascada
+// con las filas de más adelante (que a su vez pueden quedar con espacio).
+function traerDeVuelta(indice) {
+    const actual = camposDescripcion[indice];
+    const siguiente = camposDescripcion[indice + 1];
+    if (!actual || !siguiente || siguiente.value.length === 0) return;
+
+    let huboTraspaso = false;
+    while (siguiente.value.length > 0 && cabeEnFila(actual, actual.value + siguiente.value[0])) {
+        actual.value += siguiente.value[0];
+        siguiente.value = siguiente.value.slice(1);
+        huboTraspaso = true;
+    }
+    if (huboTraspaso) traerDeVuelta(indice + 1);
+}
+
 camposDescripcion.forEach((campo, indice) => {
-    campo.addEventListener("input", () => pasarDesbordeAlaSiguiente(indice));
+    campo.addEventListener("input", () => {
+        empujarDesborde(indice);
+        traerDeVuelta(indice);
+    });
 
     // Al presionar Enter dentro de una fila de descripción, NUNCA se debe
     // crear una segunda línea dentro del mismo cuadro (es de una sola línea).
@@ -437,6 +489,28 @@ camposDescripcion.forEach((campo, indice) => {
     });
 });
 
+// ESTIMATE y ACTUAL: no se deja escribir más de lo que cabe en la celda, para
+// que el monto nunca se monte sobre la línea de abajo ni se "coma" la fila.
+// El límite se mide por el ancho real de la celda, no por cantidad de
+// caracteres, así que se ajusta solo sin importar el tamaño de letra.
+const camposEstimateActual = Array.from(
+    document.querySelectorAll(".tabla-solo-servicios td:nth-child(4) .input-tabla, .tabla-solo-servicios td:nth-child(5) .input-tabla")
+);
+camposEstimateActual.forEach((campo) => {
+    let ultimoValido = campo.value;
+    campo.addEventListener("input", () => {
+        if (campo.scrollWidth > campo.clientWidth + 1) {
+            const pos = Math.max(0, campo.selectionStart - 1);
+            campo.value = ultimoValido;
+            campo.setSelectionRange(pos, pos);
+        } else {
+            ultimoValido = campo.value;
+        }
+    });
+});
+
+// El botón se enlaza SOLO aquí (antes tenía además un onclick en el HTML,
+// lo que hacía que generarImagen() corriera dos veces por cada clic).
 boton.addEventListener("click", generarImagen);
 
 // Mide el área real completa del recibo, incluyendo las cajas que sobresalen
@@ -463,14 +537,23 @@ async function generarImagen() {
     boton.disabled = true;
     boton.innerHTML = "Generando...";
 
+    // Se vuelve a poner la fecha de hoy justo antes de generar, por si la
+    // página quedó abierta de un día para otro: siempre queda el día real
+    // en que se imprime la factura.
+    if (campoFecha) campoFecha.value = fechaUSAHoy();
+
     const elemento = document.getElementById("captura");
 
     try {
 
         const areaCompleta = medirAreaCompleta(elemento);
+        const escala = Math.min(
+            ESCALA_DESEADA,
+            Math.sqrt(MAX_PIXELES / (areaCompleta.width * areaCompleta.height))
+        );
 
         const canvas = await html2canvas(elemento, {
-            scale: 3,
+            scale: escala,
             width: areaCompleta.width,
             height: areaCompleta.height,
             useCORS: true,
@@ -535,6 +618,12 @@ async function generarImagen() {
                             span.style.display = "block";
                             span.style.width = "100%";
                         }
+                        // ESTIMATE y ACTUAL: una sola línea también en la imagen final,
+                        // como respaldo del límite que ya impide escribir de más.
+                        if (indiceColumna === 3 || indiceColumna === 4) {
+                            span.style.whiteSpace = "nowrap";
+                            span.style.overflow = "hidden";
+                        }
                     }
                     input.parentNode.replaceChild(span, input);
                 });
@@ -547,6 +636,7 @@ async function generarImagen() {
         if (!blob) throw new Error("No se pudo generar la imagen");
 
         archivoActual = new File([blob], nombre, { type: "image/png" });
+        canvasActual = canvas;
 
         if (urlActual) URL.revokeObjectURL(urlActual);
         urlActual = URL.createObjectURL(blob);
@@ -556,6 +646,7 @@ async function generarImagen() {
         // El folio avanza solo cuando la imagen ya se generó correctamente.
         numFolio++;
         localStorage.setItem("folio_antonio", numFolio);
+        spanFolio.textContent = String(numFolio).padStart(5, "0");
 
     } catch (error) {
 
@@ -570,6 +661,42 @@ async function generarImagen() {
     }
 
 }
+
+// DESCARGAR PDF: usa directamente el canvas en alta resolución (sin volver a
+// decodificar la imagen) y crea una hoja de 8.5" de ancho con las MISMAS
+// proporciones de la factura, así la imagen ocupa toda la página sin
+// reducirse ni dejar márgenes vacíos.
+btnPdf.addEventListener("click", () => {
+    if (!canvasActual || !archivoActual) return;
+
+    if (!window.jspdf) {
+        alert("No se pudo cargar la librería de PDF. Revisa tu conexión a internet e inténtalo de nuevo.");
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+
+        const anchoPx = canvasActual.width;
+        const altoPx = canvasActual.height;
+
+        const pageW = 215.9;                        // 8.5 pulgadas en mm
+        const pageH = pageW * (altoPx / anchoPx);   // misma proporción que la factura
+
+        const pdf = new jsPDF({
+            orientation: pageH >= pageW ? "portrait" : "landscape",
+            unit: "mm",
+            format: [pageW, pageH],
+            compress: true
+        });
+
+        pdf.addImage(canvasActual, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+        pdf.save(archivoActual.name.replace(/\.png$/i, ".pdf"));
+    } catch (error) {
+        console.error(error);
+        alert("No fue posible generar el PDF.");
+    }
+});
 
 // IMPORTANTE: este click es un gesto de usuario NUEVO y directo (sin await antes),
 // por eso iOS Safari sí permite que navigator.share() funcione aquí.
@@ -590,7 +717,8 @@ btnCompartir.addEventListener("click", () => {
 btnGuardar.addEventListener("click", () => {
     if (!urlActual) return;
 
-    const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
 
     if (esIOS) {
         alert("Mantén presionada la imagen de arriba y elige 'Agregar a Fotos'.");
