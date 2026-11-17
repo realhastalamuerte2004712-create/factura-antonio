@@ -60,7 +60,7 @@
                     <td colspan="2" class="b-left b-top b-right b-bottom">
                         <div class="campo-linea">
                             <label>DATE:</label>
-                            <div class="valor-linea"><input type="text" id="campo-fecha" class="input-invisible" readonly></div>
+                            <div class="valor-linea"><input type="text" id="campo-fecha" class="input-invisible" placeholder="MM/DD/AAAA" inputmode="numeric" maxlength="10" autocomplete="off"></div>
                         </div>
                     </td>
                 </tr>
@@ -383,9 +383,12 @@ let canvasActual = null;  // canvas en alta resolución, para el PDF
 
 spanFolio.textContent = String(numFolio).padStart(5, "0");
 
-// FECHA AUTOMÁTICA EN FORMATO USA (MM/DD/AAAA): el cliente ya no la toca ni
-// la busca. Se pone sola al cargar la página y se vuelve a poner justo antes
-// de generar la imagen, para que quede el día real en que se imprime.
+// FECHA AUTOMÁTICA EN FORMATO USA (MM/DD/AAAA): se pone sola al cargar la
+// página y se vuelve a poner justo antes de generar la imagen, para que quede
+// el día real en que se imprime.
+// NUEVO: el campo ahora se puede editar. Si escribes otra fecha (por ejemplo
+// para un recibo viejo), esa fecha se respeta al generar la imagen. Después de
+// generar, la fecha vuelve sola a la de hoy.
 const campoFecha = document.getElementById("campo-fecha");
 function fechaUSAHoy() {
     const hoy = new Date();
@@ -395,6 +398,49 @@ function fechaUSAHoy() {
     return `${mm}/${dd}/${yyyy}`;
 }
 if (campoFecha) campoFecha.value = fechaUSAHoy();
+
+// FECHA EDITABLE: sigue siendo automática, pero si la escribes tú, se respeta.
+let fechaEditada = false;
+
+// Revisa que el texto sea una fecha real en formato MM/DD/AAAA
+// (por ejemplo, rechaza 13/45/2026 o 02/30/2026).
+function fechaValida(texto) {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto);
+    if (!m) return false;
+    const mm = Number(m[1]), dd = Number(m[2]), yyyy = Number(m[3]);
+    if (yyyy < 2000) return false;
+    const d = new Date(yyyy, mm - 1, dd);
+    return d.getFullYear() === yyyy && d.getMonth() === mm - 1 && d.getDate() === dd;
+}
+
+if (campoFecha) {
+    // FORMATO FIJO: solo acepta números y pone las "/" solas (MM/DD/AAAA).
+    campoFecha.addEventListener("input", (evento) => {
+        const borrando = evento.inputType && evento.inputType.startsWith("delete");
+        const d = campoFecha.value.replace(/\D/g, "").slice(0, 8);
+        let salida = d;
+        if (d.length > 4) {
+            salida = d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4);
+        } else if (d.length === 4 && !borrando) {
+            salida = d.slice(0, 2) + "/" + d.slice(2) + "/";
+        } else if (d.length > 2) {
+            salida = d.slice(0, 2) + "/" + d.slice(2);
+        } else if (d.length === 2 && !borrando) {
+            salida = d + "/";
+        }
+        campoFecha.value = salida;
+        fechaEditada = true;
+    });
+
+    // Si al salir del campo la fecha está incompleta o no existe,
+    // vuelve sola a la fecha de hoy.
+    campoFecha.addEventListener("blur", () => {
+        if (!fechaValida(campoFecha.value)) {
+            campoFecha.value = fechaUSAHoy();
+            fechaEditada = false;
+        }
+    });
+}
 
 // CRECIMIENTO AUTOMÁTICO: solo para Customer Name / Job Address / Cross Street
 // y Recommendations, donde SÍ queremos que el cuadro se ajuste al contenido.
@@ -538,9 +584,9 @@ async function generarImagen() {
     boton.innerHTML = "Generando...";
 
     // Se vuelve a poner la fecha de hoy justo antes de generar, por si la
-    // página quedó abierta de un día para otro: siempre queda el día real
-    // en que se imprime la factura.
-    if (campoFecha) campoFecha.value = fechaUSAHoy();
+    // página quedó abierta de un día para otro. Si la fecha fue editada a
+    // mano, se respeta la que escribiste.
+    if (campoFecha && (!fechaEditada || !fechaValida(campoFecha.value))) campoFecha.value = fechaUSAHoy();
 
     const elemento = document.getElementById("captura");
 
@@ -647,6 +693,10 @@ async function generarImagen() {
         numFolio++;
         localStorage.setItem("folio_antonio", numFolio);
         spanFolio.textContent = String(numFolio).padStart(5, "0");
+
+        // La siguiente factura vuelve a la fecha automática de hoy.
+        fechaEditada = false;
+        if (campoFecha) campoFecha.value = fechaUSAHoy();
 
     } catch (error) {
 
